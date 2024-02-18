@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	tg "github.com/luisferreira32/tmgang"
@@ -15,14 +16,15 @@ type mainMenuState struct {
 	background  *tg.StrictRectangle
 	menuEntitiy *tg.BasicMenu
 	flexRect    *tg.FlexRectangle
+	flexChatBox *tg.FlexChatBox
 }
 
 func (m *mainMenuState) GetDrawables() []tg.Entity {
-	return []tg.Entity{m.background, m.menuEntitiy, m.flexRect}
+	return []tg.Entity{m.background, m.menuEntitiy, m.flexRect, m.flexChatBox}
 }
 
 func (m *mainMenuState) GetInteractables() []tg.InteractiveEntity {
-	return []tg.InteractiveEntity{m.menuEntitiy}
+	return []tg.InteractiveEntity{m.menuEntitiy, m.flexChatBox}
 }
 
 func (*mainMenuState) GetCamera() tg.Coordinates {
@@ -34,15 +36,25 @@ func (*mainMenuState) NextState() tg.StateKey {
 	return mainMenuStateKey
 }
 
+const (
+	longMenuText = `omg i'm quite a big sentence since I want to test how the texting wraps around the box and manages to go over to the next action... and in fact the text just keeps on going since this is but an example on how to use the FlexChatBox entity.`
+)
+
 func createMainMenu(w, h int) *mainMenuState {
 	flexRectArea := tg.RectArea{
 		Coordinates: tg.Coordinates{X: 10 + w/3, Y: 10},
-		Width:       w / 3,
+		Width:       50,
 		Height:      h / 8,
 	}
 	flexRect := &tg.FlexRectangle{
 		RectArea:     flexRectArea,
 		OriginalRect: flexRectArea,
+	}
+
+	flexChatBoxArea := tg.RectArea{
+		Coordinates: tg.Coordinates{X: w - 100, Y: 10},
+		Width:       50,
+		Height:      5,
 	}
 
 	return &mainMenuState{
@@ -55,7 +67,7 @@ func createMainMenu(w, h int) *mainMenuState {
 				Width:  w + 1,
 				Height: h + 1,
 			},
-			BackgroundStyle: tcell.StyleDefault.Background(0),
+			Style: tcell.StyleDefault.Background(0),
 		},
 		menuEntitiy: &tg.BasicMenu{
 			RectArea: tg.RectArea{
@@ -66,8 +78,7 @@ func createMainMenu(w, h int) *mainMenuState {
 				Width:  w / 9,
 				Height: h / 8,
 			},
-			TextStyle:       tcell.StyleDefault.Background(0),
-			BorderStyle:     tcell.StyleDefault.Background(0),
+			Style:           tcell.StyleDefault.Background(0),
 			CurrentSelected: 0,
 			MenuItems: []string{
 				"foobar",
@@ -76,6 +87,12 @@ func createMainMenu(w, h int) *mainMenuState {
 			},
 		},
 		flexRect: flexRect,
+		flexChatBox: &tg.FlexChatBox{
+			RectArea:     flexChatBoxArea,
+			OriginalRect: flexChatBoxArea,
+			Style:        tcell.StyleDefault.Background(0),
+			Content:      strings.Split(longMenuText, " "),
+		},
 	}
 }
 
