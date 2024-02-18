@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -25,6 +26,10 @@ func (m *mainMenuState) GetDrawables() []tg.Entity {
 
 func (m *mainMenuState) GetInteractables() []tg.InteractiveEntity {
 	return []tg.InteractiveEntity{m.menuEntitiy, m.flexChatBox}
+}
+
+func (m *mainMenuState) GetTimers() []tg.TimeEntity {
+	return []tg.TimeEntity{}
 }
 
 func (*mainMenuState) GetCamera() tg.Coordinates {
@@ -113,7 +118,7 @@ func main() {
 		},
 	})
 
-	if err := eng.Run(); err != nil {
+	if err := eng.Run(context.Background()); err != nil {
 		fmt.Printf("run failed with: %v\n", err)
 	}
 }

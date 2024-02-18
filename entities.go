@@ -1,6 +1,8 @@
 package tmgang
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -34,7 +36,7 @@ type InteractiveEntity interface {
 // frame, an example for such usage would be for entities that have a
 // speed associated with them.
 type TimeEntity interface {
-	ProcessFrameDuration(e *tcell.EventKey, camera Coordinates)
+	ProcessFrameDuration(d time.Duration, camera Coordinates)
 }
 
 // Overlays are entities that are drawn at the end, regardless of camera position.

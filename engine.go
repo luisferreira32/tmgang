@@ -1,6 +1,7 @@
 package tmgang
 
 import (
+	"context"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -17,6 +18,7 @@ type StateKey string
 type State interface {
 	GetDrawables() []Entity
 	GetInteractables() []InteractiveEntity
+	GetTimers() []TimeEntity
 	GetCamera() Coordinates
 	NextState() StateKey
 }
@@ -27,7 +29,7 @@ type State interface {
 type Engine interface {
 	Configure(*EngineOpts)
 	ScreenSize() (int, int)
-	Run() error
+	Run(context.Context) error
 }
 
 type EngineOpts struct {
@@ -81,18 +83,18 @@ func (eng *engine) ScreenSize() (int, int) {
 	return eng.screen.Size()
 }
 
-// Run until the end of time!
+// Run until the end of time! (or context cancellation)
 //
 // Any errors that Run returns might be helpful in debugging issues in your game.
 // The Run function, given the initialState and the stateMachine, work through the
 // entities held in each state, calculate interactions, draw the screen, and eventually
 // attempt to calculate state transitions. If a state transitions, the new state
 // entities will go through the same process.
-func (eng *engine) Run() error {
-	return eng.run()
+func (eng *engine) Run(ctx context.Context) error {
+	return eng.run(ctx)
 }
 
-func (eng *engine) run() error {
+func (eng *engine) run(ctx context.Context) error {
 	defer func() {
 		// per tcell documentation: recover, finalize and rethrow panic to have the diagnostic trace
 		// just make sure to cleanup the terminal
@@ -110,6 +112,8 @@ func (eng *engine) run() error {
 		ratioX, ratioY     float32 = 1, 1
 		changedX, changedY int
 		initialX, initialY = eng.screen.Size()
+
+		timer = time.Now()
 
 		eventChannel = make(chan tcell.Event)
 		ev           tcell.Event
@@ -129,6 +133,8 @@ func (eng *engine) run() error {
 		select {
 		case ev = <-eventChannel:
 		case <-fpsTicker.C:
+		case <-ctx.Done():
+			return nil
 		}
 
 		switch ev := ev.(type) {
@@ -147,6 +153,11 @@ func (eng *engine) run() error {
 			}
 		}
 		ev = nil
+
+		for _, timerEntity := range eng.currentState.GetTimers() {
+			timerEntity.ProcessFrameDuration(time.Since(timer), camera)
+		}
+		timer = time.Now()
 
 		for _, entity := range eng.currentState.GetDrawables() {
 			entity.Draw(eng.screen, camera, ratioX, ratioY)
